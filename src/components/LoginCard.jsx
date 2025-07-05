@@ -1,14 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@apollo/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { LOGIN_MUTATION } from '../queries';
 import { safeRedirect } from '../utils/safeRedirect';
 
 export default function LoginCard() {
   const [form, setForm] = useState({ email: '', password: '' });
-  const [errorMessage, setErrorMessage] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
   const [searchParams] = useSearchParams();
+  const [status, setStatus] = useState('idle');
   const turnstileContainerRef = useRef(null);
   const widgetIdRef = useRef(null);
   const navigate = useNavigate();
@@ -36,11 +37,12 @@ export default function LoginCard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!turnstileToken) {
-      setErrorMessage('인증을 완료해주세요.');
+      toast.error('인증을 완료해주세요.');
       return;
     }
 
     try {
+      setStatus('loading');
       const { data } = await loginMutation({
         variables: {
           email: form.email,
@@ -54,7 +56,8 @@ export default function LoginCard() {
       navigate(redirect);
     } catch (error) {
       console.error('로그인 실패:', error);
-      setErrorMessage('이메일 또는 비밀번호가 올바르지 않습니다.');
+      toast.error('로그인에 실패했습니다.');
+      setStatus('idle');
       setTurnstileToken('');
       if (window.turnstile && widgetIdRef.current !== null) {
         window.turnstile.reset(widgetIdRef.current);
@@ -65,13 +68,7 @@ export default function LoginCard() {
   return (
     <div className="bg-[#fcf8f3] min-h-screen flex items-center justify-center px-4 font-sans">
       <div className="bg-white rounded-2xl shadow-md p-8 max-w-md w-full text-center">
-        <h2 className="text-2xl font-bold mb-2">계정 로그인</h2>
-
-        {errorMessage && (
-          <div className="bg-red-100 text-red-600 text-sm p-2 rounded mt-4 mb-4">
-            {errorMessage}
-          </div>
-        )}
+        <h2 className="text-2xl font-bold mb-6">계정 로그인</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -99,12 +96,20 @@ export default function LoginCard() {
             style={{ display: 'flex', justifyContent: 'center' }}
           />
 
-          <button
-            type="submit"
-            className="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg font-semibold text-sm transition"
-          >
-            로그인
-          </button>
+          {status === 'idle' && (
+            <button
+              type="submit"
+              className="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg font-semibold text-sm transition"
+            >
+              로그인
+            </button>
+          )}
+
+          {status === 'loading' && (
+            <div className="mt-4">
+              <div className="w-8 h-8 border-4 border-gray-300 border-t-4 border-t-blue-500 rounded-full animate-spin mx-auto" />
+            </div>
+          )}
         </form>
 
         <p className="text-sm text-gray-600 mt-6">

@@ -18,9 +18,9 @@ export default function PlaygroundCard() {
   const decodedAccessToken = decodeJwt(accessToken);
 
   const handleLogout = () => {
+    logoutMutation({ variables: { refreshToken } });
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    logoutMutation({ variables: { refreshToken } });
     navigate('/login');
   };
 

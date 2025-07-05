@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useLazyQuery } from '@apollo/client';
 import { isValidCallback } from '../utils/isValidCallback';
 import axios from 'axios';
@@ -11,14 +12,16 @@ import {
 export default function OAuthCard() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const turnstileRef = useRef(null);
 
   const clientId = searchParams.get('clientId');
   const callback = searchParams.get('callback');
 
   const [status, setStatus] = useState('idle'); 
   const [errorMsg, setErrorMsg] = useState('');
+
   const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileContainerRef = useRef(null);
+  const widgetIdRef = useRef(null);
   const [appInfo, setAppInfo] = useState(null);
 
   const [loadAppInfo, { loading: infoLoading, error: infoError }] = useLazyQuery(APP_INFO_QUERY);
@@ -53,19 +56,22 @@ export default function OAuthCard() {
   }, [clientId, callback, loadAppInfo]);
 
   useEffect(() => {
-    if (window.turnstile && turnstileRef.current) {
-      window.turnstile.render(turnstileRef.current, {
-        sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
-        theme: 'light',
-        callback: (token) => setTurnstileToken(token),
-      });
+    if (window.turnstile && turnstileContainerRef.current) {
+      widgetIdRef.current = window.turnstile.render(
+        turnstileContainerRef.current,
+        {
+          sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY,
+          theme: 'light',
+          callback: (token) => setTurnstileToken(token),
+        }
+      );
     }
-  }, []);
+  }, [status === 'idle']);
 
   const handleAgree = async () => {
     if (status === 'loading' || status === 'invalid') return;
     if (!turnstileToken) {
-      setErrorMsg('Turnstile 검증이 필요합니다.');
+      toast.error('인증을 완료해주세요.');
       return;
     }
     setStatus('loading');
@@ -100,6 +106,15 @@ export default function OAuthCard() {
     setStatus('cancelled');
   };
 
+  const resetState = () => {
+    setErrorMsg('');
+    setStatus('idle');
+    setTurnstileToken('');
+    if (window.turnstile && widgetIdRef.current !== null) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+  };
+
   if (status === 'invalid' || infoError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 space-y-4 text-center">
@@ -124,7 +139,7 @@ export default function OAuthCard() {
       <div className="min-h-screen flex flex-col items-center justify-center px-4 space-y-4 text-center">
         <h1 className="text-2xl font-bold text-red-600">로그인 실패</h1>
         <p className="text-gray-700">{errorMsg}</p>
-        <button onClick={() => { setStatus('idle'); setErrorMsg(''); }} className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold">
+        <button onClick={resetState} className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold">
           다시 시도
         </button>
       </div>
@@ -153,12 +168,16 @@ export default function OAuthCard() {
           : `${appInfo?.name || ''}이(가) 귀하의 프로필 정보를 제공합니다.`}
       </p>
 
-      {/* Turnstile 위젯 */}
-      <div ref={turnstileRef} className="mt-4" />
-
-      {/* 에러 메시지 */}
       {status === 'idle' && errorMsg && (
         <p className="text-red-500 mt-2">{errorMsg}</p>
+      )}
+
+      {status === 'idle' && (
+        <div
+          ref={turnstileContainerRef}
+          className="my-2 w-full"
+          style={{ display: 'flex', justifyContent: 'center' }}
+        />
       )}
 
       {status !== 'loading' && (
@@ -180,7 +199,6 @@ export default function OAuthCard() {
         </div>
       )}
 
-      {/* 로딩 스피너 */}
       {status === 'loading' && (
         <div className="mt-4">
           <div className="w-8 h-8 border-4 border-gray-300 border-t-4 border-t-blue-500 rounded-full animate-spin mx-auto" />
