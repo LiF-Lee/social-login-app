@@ -32,12 +32,6 @@ export default function AppCard() {
   const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
-    if (apps.length > 0) {
-      setApps(prev => [...prev].sort((a, b) => a.id - b.id));
-    }
-  }, [apps]);
-
-  useEffect(() => {
     if (data?.me?.apps) {
       setApps(data.me.apps);
     }
@@ -147,27 +141,30 @@ export default function AppCard() {
                 </td>
               </tr>
             ) : (
-              apps.map(app => (
-                <tr key={app.id} className="hover:bg-gray-50 transition">
-                  <td className="p-2">{app.name}</td>
-                  <td className="p-2 text-center font-mono text-xs">{app.clientId}</td>
-                  <td className="p-2 text-center">{app.created?.slice(0, 10)}</td>
-                  <td className="p-2 text-center space-x-2">
-                    <button
-                      onClick={() => openEdit(app)}
-                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-                    >
-                      상세
-                    </button>
-                    <button
-                      onClick={() => openDelete(app.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                    >
-                      삭제
-                    </button>
-                  </td>
-                </tr>
-              ))
+              [...apps]
+                .sort((a, b) => a.id - b.id)
+                .map(app => (
+                  <tr key={app.id} className="hover:bg-gray-50 transition">
+                    <td className="p-2">{app.name}</td>
+                    <td className="p-2 text-center font-mono text-xs">{app.clientId}</td>
+                    <td className="p-2 text-center">{app.created?.slice(0, 10)}</td>
+                    <td className="p-2 text-center space-x-2">
+                      <button
+                        onClick={() => openEdit(app)}
+                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                      >
+                        상세
+                      </button>
+                      <button
+                        onClick={() => openDelete(app.id)}
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                      >
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )
             )}
           </tbody>
         </table>
