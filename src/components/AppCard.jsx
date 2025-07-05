@@ -32,7 +32,15 @@ export default function AppCard() {
   const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
-    if (data?.me?.apps) setApps(data.me.apps);
+    if (apps.length > 0) {
+      setApps(prev => [...prev].sort((a, b) => a.id - b.id));
+    }
+  }, [apps]);
+
+  useEffect(() => {
+    if (data?.me?.apps) {
+      setApps(data.me.apps);
+    }
   }, [data]);
 
   const handleAdd = async () => {
