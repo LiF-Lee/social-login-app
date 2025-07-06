@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage';
 import PlaygroundPage from './pages/PlaygroundPage';
 import OAuthPage from './pages/OAuthPage';
 import AppPage from './pages/AppPage';
+import WebAuthnPage from './pages/WebAuthnPage';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/playground" element={<PlaygroundPage />} />
           <Route path="/app" element={<AppPage />} />
           <Route path="/oauth" element={<OAuthPage />} />
+          <Route path="/webauthn" element={<WebAuthnPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to={import.meta.env.VITE_DEFAULT_APP_PATH} replace />} />

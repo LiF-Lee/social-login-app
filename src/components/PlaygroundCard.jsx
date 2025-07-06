@@ -49,6 +49,10 @@ export default function PlaygroundCard() {
     navigate('/app');
   }
 
+  const handleWebAuthn = () => {
+    navigate('/webauthn');
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center font-sans space-y-6">
       <h1 className="text-2xl font-bold mb-4">{user.name}님 환영합니다!</h1>
@@ -93,27 +97,33 @@ export default function PlaygroundCard() {
         <div className="flex justify-center space-x-4 pt-4">
           <button
             onClick={handleLogout}
-            className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold"
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold"
           >
-            로그아웃
+            Logout
           </button>
           <button
             onClick={handleRefreshToken}
-            className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold"
+            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold"
           >
-            토큰 리프레시
+            Refresh
           </button>
           <button
             onClick={handleAppManagement}
             className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg font-semibold"
           >
-            앱관리
+            Apps
+          </button>
+          <button
+            onClick={handleWebAuthn}
+            className="px-4 py-2 bg-yellow-500 hover:bg-purple-600 text-white rounded-lg font-semibold"
+          >
+            WebAuthn
           </button>
           <button
             onClick={handleOauth}
-            className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold"
+            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold"
           >
-            Oauth 테스트
+            OAuth
           </button>
         </div>
       </div>
