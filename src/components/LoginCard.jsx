@@ -1,9 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { useMutation } from '@apollo/client';
+import { useLazyQuery, useMutation } from '@apollo/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { LOGIN_MUTATION } from '../queries';
 import { safeRedirect } from '../utils/safeRedirect';
+import { base64ToArrayBuffer, arrayBufferToBase64 } from '../utils/base64';
+import {
+  LOGIN_MUTATION,
+  GENERATE_WEBAUTHN_ASSERTION_OPTIONS_QUERY,
+  LOGIN_WITH_WEBAUTHN_MUTATION
+} from '../queries';
 
 export default function LoginCard() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -16,6 +21,10 @@ export default function LoginCard() {
   const redirect = safeRedirect(searchParams.get('redirect'));
 
   const [loginMutation] = useMutation(LOGIN_MUTATION);
+  const [assertionQuery] = useLazyQuery(GENERATE_WEBAUTHN_ASSERTION_OPTIONS_QUERY, {
+    fetchPolicy: 'network-only',
+  });
+  const [verifyAssertion] = useMutation(LOGIN_WITH_WEBAUTHN_MUTATION);
 
   useEffect(() => {
     if (window.turnstile && turnstileContainerRef.current) {
@@ -50,6 +59,7 @@ export default function LoginCard() {
           turnstileToken,
         },
       });
+      toast.success('로그인 성공! 환영합니다.');
       const { accessToken, refreshToken } = data.account.login;
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
@@ -65,6 +75,62 @@ export default function LoginCard() {
     }
   };
 
+  const handleAuthenticate = async () => {
+    try {
+      setStatus('loading');
+      const { data } = await assertionQuery();
+      const options = data.generateAssertionOptionsForLogin;
+
+      const publicKeyCredentialRequestOptions = {
+        challenge: base64ToArrayBuffer(options.challenge),
+        rpId: options.rpId,
+        timeout: options.timeout,
+        allowCredentials: (options.allowCredentials || []).map(cred => ({
+          type: cred.type,
+          id: base64ToArrayBuffer(cred.id),
+        })),
+        userVerification: options.userVerification,
+      };
+
+      const assertion = await navigator.credentials.get({
+        publicKey: publicKeyCredentialRequestOptions,
+      });
+
+      const authenticationPayload = {
+        id: assertion.id,
+        rawId: arrayBufferToBase64(assertion.rawId),
+        response: {
+          authenticatorData: arrayBufferToBase64(assertion.response.authenticatorData),
+          clientDataJSON: arrayBufferToBase64(assertion.response.clientDataJSON),
+          signature: arrayBufferToBase64(assertion.response.signature),
+          userHandle: assertion.response.userHandle
+            ? arrayBufferToBase64(assertion.response.userHandle)
+            : null,
+        },
+        challengeId: options.challengeId,
+      };
+
+      const res = await verifyAssertion({
+        variables: {
+          input: authenticationPayload,
+        },
+      });
+
+      toast.success('인증 성공! 환영합니다.');
+
+      const { accessToken, refreshToken } = res.data.account.loginWithWebAuthn;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      navigate(redirect);
+    } catch (err) {
+      setStatus('idle');
+      console.error('Authentication failed:', err);
+      toast.error('인증 실패');
+    } finally {
+      
+    }
+  };
+  
   return (
     <div className="bg-[#fcf8f3] min-h-screen flex items-center justify-center px-4 font-sans">
       <div className="bg-white rounded-2xl shadow-md p-8 max-w-md w-full text-center">
@@ -102,6 +168,15 @@ export default function LoginCard() {
               className="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg font-semibold text-sm transition"
             >
               로그인
+            </button>
+          )}
+
+          {status === 'idle' && (
+            <button
+              onClick={handleAuthenticate}
+              className="w-full py-3 bg-blue-400 hover:bg-blue-500 text-white rounded-lg font-semibold text-sm transition"
+            >
+              패스키로 로그인
             </button>
           )}
 

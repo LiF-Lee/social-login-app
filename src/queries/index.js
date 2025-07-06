@@ -156,3 +156,70 @@ export const APP_OAUTH_QUERY = gql`
     agree(clientId: $clientId, turnstileToken: $turnstileToken)
   }
 `;
+
+export const GENERATE_WEBAUTHN_REGISTRATION_OPTIONS_QUERY = gql`
+  query GenerateWebAuthnRegistrationOptions {
+    generateRegistrationOptions {
+      challenge
+      rpId
+      userId
+      userName
+      userDisplayName
+      pubKeyCredParams {
+        type
+        alg
+      }
+      excludeCredentials {
+        type
+        id
+      }
+      authenticatorSelection {
+        userVerification
+        residentKey
+      }
+      timeout
+      attestation
+    }
+  }
+`;
+
+export const GENERATE_WEBAUTHN_ASSERTION_OPTIONS_QUERY = gql`
+  query GenerateWebAuthnAssertionOptions {
+    generateAssertionOptionsForLogin {
+      challengeId
+      challenge
+      rpId
+      allowCredentials {
+        type
+        id
+      }
+      timeout
+      userVerification
+    }
+  }
+`;
+
+export const REGISTER_WEBAUTHN_CREDENTIAL_MUTATION = gql`
+  mutation RegisterWebAuthnCredential($input: CredentialAttestationInput!) {
+    account {
+      registerWebAuthnCredential(input: $input)
+    }
+  }
+`;
+
+export const LOGIN_WITH_WEBAUTHN_MUTATION = gql`
+  mutation LoginWithWebAuthn($input: CredentialAssertionInput!) {
+    account {
+      loginWithWebAuthn(input: $input) {
+        accessToken
+        refreshToken
+        user {
+          name
+          email
+          created
+        }
+      }
+    }
+  }
+`;
+
