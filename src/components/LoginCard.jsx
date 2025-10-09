@@ -92,6 +92,17 @@ export default function LoginCard() {
         userVerification: options.userVerification,
       };
 
+      console.log('Challenge:', {
+        challenge: options.challenge,
+        rpId: options.rpId,
+        timeout: options.timeout,
+        allowCredentials: (options.allowCredentials || []).map(cred => ({
+          type: cred.type,
+          id: cred.id,
+        })),
+        userVerification: options.userVerification,
+      });
+
       const assertion = await navigator.credentials.get({
         publicKey: publicKeyCredentialRequestOptions,
       });
@@ -109,6 +120,8 @@ export default function LoginCard() {
         },
         challengeId: options.challengeId,
       };
+
+      console.log('Authentication Payload:', authenticationPayload);
 
       const res = await verifyAssertion({
         variables: {

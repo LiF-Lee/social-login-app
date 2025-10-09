@@ -5,8 +5,7 @@ import { REFRESH_TOKEN_MUTATION } from '../queries';
 import graphqlClient from './graphqlRequestClient';
 
 const httpLink = createHttpLink({
-  uri: import.meta.env.VITE_API_URL,
-  credentials: 'include',
+  uri: import.meta.env.VITE_API_URL
 });
 
 const authLink = setContext((_, { headers }) => {

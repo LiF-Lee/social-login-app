@@ -57,7 +57,7 @@ export default function WebAuthnCard() {
         attestation: options.attestation.toLowerCase() || 'none',
       };
 
-      console.log('Challenge:', options.challenge);
+      console.log('Challenge:', JSON.stringify(publicKeyCredentialCreationOptions, null, 2));
 
       const registrationCredential = await navigator.credentials.create({
         publicKey: publicKeyCredentialCreationOptions,
@@ -107,7 +107,16 @@ export default function WebAuthnCard() {
         userVerification: options.userVerification,
       };
 
-      console.log('Challenge:', options.challenge);
+      console.log('Challenge:', {
+        challenge: options.challenge,
+        rpId: options.rpId,
+        timeout: options.timeout,
+        allowCredentials: (options.allowCredentials || []).map(cred => ({
+          type: cred.type,
+          id: cred.id,
+        })),
+        userVerification: options.userVerification,
+      });
 
       const assertion = await navigator.credentials.get({
         publicKey: publicKeyCredentialRequestOptions,
@@ -127,6 +136,8 @@ export default function WebAuthnCard() {
         challengeId: options.challengeId,
       };
 
+      console.log('Authentication Payload:', assertion);
+
       setAuthenticationResult(authenticationPayload);
 
       const res = await verifyAssertion({
@@ -139,7 +150,7 @@ export default function WebAuthnCard() {
 
       setUserInfo(res.data.account.loginWithWebAuthn.user);
 
-      console.log('로그인 토큰:', res.data.account.loginWithWebAuthn);
+      console.log('Authentication Result:', res.data.account.loginWithWebAuthn);
     } catch (err) {
       console.error('Authentication failed:', err);
       toast.error('인증 실패');
